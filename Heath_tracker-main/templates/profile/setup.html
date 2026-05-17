@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% block title %}Setup Profile — HealthAI{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:760px">
+  <div class="mb-4">
+    <h3 class="fw-bold"><i class="bi bi-person-gear me-2 text-primary"></i>Health Profile Setup</h3>
+    <p class="text-muted">Tell us about yourself so we can build your personalised plan</p>
+
+    <!-- Progress bar -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="small text-muted">Step <span id="step-num">1</span> of 6</span>
+      <span class="small text-muted" id="step-label">Basic Information</span>
+    </div>
+    <div class="progress" style="height:6px">
+      <div class="progress-bar bg-primary" id="progress-bar" style="width:16.6%"></div>
+    </div>
+  </div>
+
+  <form method="POST" id="profile-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <!-- ── STEP 1: Basic Info ──────────────────────────────────────────── -->
+    <div class="wizard-step" data-step="1" data-label="Basic Information">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-person-circle me-2 text-primary"></i>Basic Information</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Age</label>
+              <input type="number" name="age" class="form-control" min="10" max="100"
+                     value="{{ profile.age if profile else 25 }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Gender</label>
+              <select name="gender" class="form-select">
+                <option value="male"   {% if profile and profile.gender=='male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if profile and profile.gender=='female' %}selected{% endif %}>Female</option>
+                <option value="other"  {% if profile and profile.gender=='other' %}selected{% endif %}>Other / Prefer not to say</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Height (cm)</label>
+              <input type="number" name="height_cm" class="form-control" min="100" max="250" step="0.1"
+                     value="{{ profile.height_cm if profile else 170 }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Weight (kg)</label>
+              <input type="number" name="weight_kg" class="form-control" min="20" max="300" step="0.1"
+                     value="{{ profile.weight_kg if profile else 70 }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Health Info ────────────────────────────────────────── -->
+    <div class="wizard-step d-none" data-step="2" data-label="Health Information">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-heart-pulse me-2 text-danger"></i>Health Information</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Medical Conditions</label>
+              <select name="medical" class="form-select">
+                <option value="none"     {% if not profile or profile.medical=='none' %}selected{% endif %}>None</option>
+                <option value="diabetes" {% if profile and profile.medical=='diabetes' %}selected{% endif %}>Diabetes</option>
+                <option value="bp"       {% if profile and profile.medical=='bp' %}selected{% endif %}>High Blood Pressure</option>
+                <option value="thyroid"  {% if profile and profile.medical=='thyroid' %}selected{% endif %}>Thyroid</option>
+                <option value="pcod"     {% if profile and profile.medical=='pcod' %}selected{% endif %}>PCOD / PCOS</option>
+                <option value="other"    {% if profile and profile.medical=='other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Stress Level</label>
+              <select name="stress_level" class="form-select">
+                <option value="low"    {% if profile and profile.stress_level=='low' %}selected{% endif %}>Low</option>
+                <option value="medium" {% if not profile or profile.stress_level=='medium' %}selected{% endif %}>Medium</option>
+                <option value="high"   {% if profile and profile.stress_level=='high' %}selected{% endif %}>High</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Allergies <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="text" name="allergies" class="form-control"
+                     placeholder="e.g. nuts, dairy, gluten"
+                     value="{{ profile.allergies if profile else '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Current Medications <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="text" name="medications" class="form-control"
+                     placeholder="List any medications"
+                     value="{{ profile.medications if profile else '' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Injuries or Physical Limitations <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="text" name="injuries" class="form-control"
+                     placeholder="e.g. knee injury, lower back pain"
+                     value="{{ profile.injuries if profile else '' }}">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Fitness Goals ──────────────────────────────────────── -->
+    <div class="wizard-step d-none" data-step="3" data-label="Fitness Goals">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-trophy me-2 text-warning"></i>Fitness Goals</h5>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Primary Goal</label>
+              <div class="row g-2">
+                {% set goals = [
+                  ('weight_loss','Weight Loss','bi-arrow-down-circle','text-success'),
+                  ('muscle_gain','Muscle Gain','bi-lightning-charge','text-warning'),
+                  ('maintain_fitness','Maintain Fitness','bi-activity','text-primary'),
+                  ('improve_stamina','Improve Stamina','bi-wind','text-info')
+                ] %}
+                {% for val, label, icon, color in goals %}
+                <div class="col-md-6">
+                  <input type="radio" class="btn-check" name="primary_goal" id="goal_{{ val }}" value="{{ val }}"
+                         {% if profile and profile.primary_goal==val %}checked{% elif not profile and val=='maintain_fitness' %}checked{% endif %}>
+                  <label class="btn btn-outline-secondary w-100 text-start p-3" for="goal_{{ val }}">
+                    <i class="bi {{ icon }} {{ color }} me-2 fs-5"></i>{{ label }}
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Target Weight (kg) <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="number" name="target_weight" class="form-control" min="30" max="200" step="0.1"
+                     value="{{ profile.target_weight if profile and profile.target_weight else '' }}"
+                     placeholder="Your target weight">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Timeframe</label>
+              <select name="timeframe" class="form-select">
+                <option value="1_month"  {% if profile and profile.timeframe=='1_month' %}selected{% endif %}>1 Month</option>
+                <option value="3_months" {% if not profile or profile.timeframe=='3_months' %}selected{% endif %}>3 Months</option>
+                <option value="6_months" {% if profile and profile.timeframe=='6_months' %}selected{% endif %}>6 Months</option>
+                <option value="1_year"   {% if profile and profile.timeframe=='1_year' %}selected{% endif %}>1 Year</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Lifestyle ──────────────────────────────────────────── -->
+    <div class="wizard-step d-none" data-step="4" data-label="Lifestyle Details">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-clock-history me-2 text-info"></i>Lifestyle Details</h5>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Activity Level</label>
+              <div class="row g-2">
+                {% set levels = [
+                  ('sedentary','Sedentary','Little or no exercise'),
+                  ('lightly_active','Lightly Active','Light exercise 1-3 days/week'),
+                  ('moderately_active','Moderately Active','Moderate exercise 3-5 days/week'),
+                  ('very_active','Very Active','Hard exercise 6-7 days/week')
+                ] %}
+                {% for val, label, desc in levels %}
+                <div class="col-md-6">
+                  <input type="radio" class="btn-check" name="activity_level" id="act_{{ val }}" value="{{ val }}"
+                         {% if profile and profile.activity_level==val %}checked{% elif not profile and val=='lightly_active' %}checked{% endif %}>
+                  <label class="btn btn-outline-secondary w-100 text-start p-3" for="act_{{ val }}">
+                    <span class="fw-semibold d-block">{{ label }}</span>
+                    <span class="small text-muted">{{ desc }}</span>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Working Hours/day</label>
+              <input type="number" name="working_hours" class="form-control" min="0" max="16"
+                     value="{{ profile.working_hours if profile else 8 }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Sitting Hours/day</label>
+              <input type="number" name="sitting_hours" class="form-control" min="0" max="16"
+                     value="{{ profile.sitting_hours if profile else 6 }}">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Sleep Hours/day</label>
+              <input type="number" name="sleep_hours" class="form-control" min="3" max="12" step="0.5"
+                     value="{{ profile.sleep_hours if profile else 7 }}">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: Diet Preferences ───────────────────────────────────── -->
+    <div class="wizard-step d-none" data-step="5" data-label="Dietary Preferences">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-egg-fried me-2 text-warning"></i>Dietary Preferences</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Food Type</label>
+              <div class="d-flex gap-2 flex-wrap">
+                {% for val, label in [('vegetarian','Vegetarian'),('non_vegetarian','Non-Vegetarian'),('vegan','Vegan')] %}
+                <div>
+                  <input type="radio" class="btn-check" name="food_type" id="food_{{ val }}" value="{{ val }}"
+                         {% if profile and profile.food_type==val %}checked{% elif not profile and val=='vegetarian' %}checked{% endif %}>
+                  <label class="btn btn-outline-success" for="food_{{ val }}">{{ label }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Budget</label>
+              <div class="d-flex gap-2">
+                {% for val, label in [('low','Low'),('medium','Medium'),('high','High')] %}
+                <div>
+                  <input type="radio" class="btn-check" name="budget" id="bud_{{ val }}" value="{{ val }}"
+                         {% if profile and profile.budget==val %}checked{% elif not profile and val=='medium' %}checked{% endif %}>
+                  <label class="btn btn-outline-primary" for="bud_{{ val }}">{{ label }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Meal Frequency</label>
+              <select name="meal_frequency" class="form-select">
+                <option value="2_meals" {% if profile and profile.meal_frequency=='2_meals' %}selected{% endif %}>2 Meals/day</option>
+                <option value="3_meals" {% if not profile or profile.meal_frequency=='3_meals' %}selected{% endif %}>3 Meals/day</option>
+                <option value="5_meals" {% if profile and profile.meal_frequency=='5_meals' %}selected{% endif %}>5 Small Meals</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Preferred Cuisine</label>
+              <select name="cuisine" class="form-select">
+                <option value="mixed"        {% if not profile or profile.cuisine=='mixed' %}selected{% endif %}>Mixed</option>
+                <option value="north_indian" {% if profile and profile.cuisine=='north_indian' %}selected{% endif %}>North Indian</option>
+                <option value="south_indian" {% if profile and profile.cuisine=='south_indian' %}selected{% endif %}>South Indian</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 6: Fitness Level ──────────────────────────────────────── -->
+    <div class="wizard-step d-none" data-step="6" data-label="Fitness Level">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4"><i class="bi bi-bar-chart-steps me-2 text-success"></i>Fitness Level</h5>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Current Fitness Level</label>
+              <div class="row g-2">
+                {% set fit_levels = [
+                  ('beginner','Beginner','New to exercise, <3 months'),
+                  ('intermediate','Intermediate','Active 3-12 months'),
+                  ('advanced','Advanced','Training 1+ years')
+                ] %}
+                {% for val, label, desc in fit_levels %}
+                <div class="col-md-4">
+                  <input type="radio" class="btn-check" name="fitness_level" id="fit_{{ val }}" value="{{ val }}"
+                         {% if profile and profile.fitness_level==val %}checked{% elif not profile and val=='beginner' %}checked{% endif %}>
+                  <label class="btn btn-outline-info w-100 text-start p-3" for="fit_{{ val }}">
+                    <span class="fw-semibold d-block">{{ label }}</span>
+                    <span class="small text-muted">{{ desc }}</span>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Current Exercise Habits <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea name="exercise_habit" class="form-control" rows="3"
+                        placeholder="e.g. I walk 30 minutes daily, I go to gym 2x/week...">{{ profile.exercise_habit if profile else '' }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary before submit -->
+      <div class="alert alert-success border-0">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Almost done! Click <strong>Save Profile</strong> to generate your AI-powered health plan.
+      </div>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="d-flex justify-content-between mt-3">
+      <button type="button" class="btn btn-outline-secondary px-4" id="btn-prev" onclick="changeStep(-1)" disabled>
+        <i class="bi bi-arrow-left me-2"></i>Previous
+      </button>
+      <button type="button" class="btn btn-primary px-4" id="btn-next" onclick="changeStep(1)">
+        Next<i class="bi bi-arrow-right ms-2"></i>
+      </button>
+      <button type="submit" class="btn btn-success px-4 d-none" id="btn-submit">
+        <i class="bi bi-check-lg me-2"></i>Save Profile
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/profile_wizard.js') }}"></script>
+{% endblock %}

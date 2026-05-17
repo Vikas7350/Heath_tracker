@@ -1,0 +1,12 @@
+Flask==3.0.0
+Flask-Login==0.6.3
+Flask-PyMongo==2.3.0
+pymongo==4.6.3
+Werkzeug==3.0.1
+scikit-learn==1.5.1
+pandas==2.2.2
+numpy==1.26.4
+openai==1.77.0
+python-dotenv==1.0.1
+gunicorn==22.0.0
+joblib==1.4.2

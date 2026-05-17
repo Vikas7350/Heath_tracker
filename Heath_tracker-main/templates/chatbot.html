@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}AI Coach — HealthAI{% endblock %}
+{% block content %}
+<div class="container py-4 chat-shell">
+  <div class="chat-hero d-flex align-items-center mb-4">
+    <div class="me-3">
+      <div class="chatbot-avatar"><i class="bi bi-robot fs-3 text-primary"></i></div>
+    </div>
+    <div>
+      <h4 class="fw-bold mb-0">AI Health Coach</h4>
+      <p class="text-muted mb-0 small">Powered by AI · personalised to your profile</p>
+    </div>
+    <span class="badge bg-success ms-auto">Online</span>
+  </div>
+
+  <!-- Suggestion chips -->
+  <div class="mb-3 d-flex flex-wrap gap-2">
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">How many calories should I eat?</span>
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">Suggest a diet for weight loss</span>
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">What's my protein target?</span>
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">Best workout for beginners</span>
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">How much water should I drink?</span>
+    <span class="suggestion-chip" onclick="sendSuggestion(this)">Tips to improve sleep</span>
+  </div>
+
+  <!-- Chat window -->
+  <div class="chat-window" id="chat-window">
+    <div class="chat-message bot">
+      <div class="avatar"><i class="bi bi-robot"></i></div>
+      <div class="bubble">
+        👋 Hi {{ current_user.name }}! I'm your personal AI Health Coach.<br><br>
+        I know your profile — your BMI, calorie targets, fitness level, and goals. Ask me anything about
+        <strong>diet, workouts, nutrition, or lifestyle</strong>!
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="chat-input-area mt-3">
+    <div class="input-group">
+      <textarea id="user-input" class="form-control" rows="2"
+                placeholder="Ask your health question..." style="resize:none"></textarea>
+      <button class="btn btn-primary px-4" id="send-btn" onclick="sendMessage()">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+    <div class="form-text text-muted mt-1">
+      Press <kbd>Ctrl+Enter</kbd> to send · Responses are personalised to your health profile
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}

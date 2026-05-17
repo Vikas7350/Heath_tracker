@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}HealthAI Tracker{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<nav class="navbar navbar-expand-lg navbar-dark" id="main-nav">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">
+      <i class="bi bi-heart-pulse-fill text-danger me-2"></i>HealthAI
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navContent">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+             href="{{ url_for('dashboard') }}"><i class="bi bi-grid me-1"></i>Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'recommendations' %}active{% endif %}"
+             href="{{ url_for('recommendations') }}"><i class="bi bi-stars me-1"></i>My Plan</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}"
+             href="{{ url_for('chatbot') }}"><i class="bi bi-robot me-1"></i>AI Coach</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'setup_profile' %}active{% endif %}"
+             href="{{ url_for('setup_profile') }}"><i class="bi bi-person-gear me-1"></i>Profile</a>
+        </li>
+      </ul>
+      <div class="nav-actions d-flex align-items-center gap-3">
+        <button class="btn btn-outline-light btn-sm icon-btn" type="button" id="dark-toggle" title="Toggle dark mode">
+          <i class="bi bi-moon-stars"></i>
+        </button>
+        <span class="text-light opacity-75 small">{{ current_user.name }}</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<div class="{% if current_user.is_authenticated %}main-content{% endif %}">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-3">
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('dark-toggle');
+  if (!toggle) return;
+  if (localStorage.getItem('healthai-theme') === 'dark') document.body.classList.add('dark-mode');
+  toggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('healthai-theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+  });
+});
+</script>
+<script>
+// Prevent double submit and show spinner on submit buttons
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', (e) => {
+      const btn = form.querySelector('button[type="submit"], input[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner-border spinner-border-sm ms-2';
+        spinner.setAttribute('role', 'status');
+        spinner.setAttribute('aria-hidden', 'true');
+        btn.appendChild(spinner);
+      }
+    });
+  });
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

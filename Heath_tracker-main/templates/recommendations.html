@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}My Plan — HealthAI{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="page-hero d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <span class="section-kicker">Personalized Plan</span>
+      <h3 class="fw-bold mb-1"><i class="bi bi-stars me-2 text-warning"></i>Your Personalised Plan</h3>
+      <p class="text-muted mb-0">AI-generated based on your health profile</p>
+    </div>
+    <div class="d-flex gap-2">
+      <span class="badge bg-primary fs-6 px-3 py-2">{{ profile.primary_goal|replace('_',' ')|title }}</span>
+      <span class="badge bg-secondary fs-6 px-3 py-2">{{ profile.fitness_level|title }}</span>
+    </div>
+  </div>
+
+  <!-- ── Diet Plan ──────────────────────────────────────────────────────── -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-transparent py-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-egg-fried me-2 text-warning"></i>Today's Meal Plan</h5>
+      <p class="small text-muted mb-0">Personalised for {{ profile.food_type|replace('_',' ')|title }} · {{ profile.cuisine|replace('_',' ')|title }} cuisine</p>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
+        {% for slot, icon, color in [
+          ('breakfast','bi-sun','text-warning'),
+          ('lunch','bi-brightness-high','text-success'),
+          ('dinner','bi-moon','text-primary'),
+          ('snack','bi-cup-straw','text-info')
+        ] %}
+        {% if diet.get(slot) %}
+        {% set meal = diet[slot] %}
+        <div class="col-md-6 col-xl-3">
+          <div class="meal-card h-100">
+            <div class="meal-visual"><i class="bi {{ icon }}"></i></div>
+            <div class="meal-header">
+              <i class="bi {{ icon }} {{ color }} fs-4 me-2"></i>
+              <span class="fw-bold text-capitalize">{{ slot }}</span>
+            </div>
+            <div class="meal-name">{{ meal.name }}</div>
+            <div class="meal-macros">
+              <span class="macro-pill macro-cal"><i class="bi bi-fire me-1"></i>{{ meal.calories }} kcal</span>
+              <span class="macro-pill macro-prot"><i class="bi bi-egg me-1"></i>P: {{ meal.protein_g }}g</span>
+              <span class="macro-pill macro-carb"><i class="bi bi-circle me-1"></i>C: {{ meal.carbs_g }}g</span>
+              <span class="macro-pill macro-fat"><i class="bi bi-droplet me-1"></i>F: {{ meal.fat_g }}g</span>
+            </div>
+            {% if meal.tags %}
+            <div class="meal-tags mt-2">
+              {% for tag in meal.tags.split('|')[:2] %}
+              <span class="badge bg-light text-muted small">{{ tag }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+      </div>
+
+      <!-- Daily totals -->
+      {% if diet.totals %}
+      <div class="mt-4 p-3 bg-light rounded-3">
+        <div class="row text-center g-2">
+          <div class="col">
+            <div class="small text-muted">Total Calories</div>
+            <div class="fw-bold fs-5
+              {% if diet.totals.calories|int <= metrics.target_cal|int + 100 %}text-success
+              {% else %}text-warning{% endif %}">
+              {{ diet.totals.calories|int }}
+            </div>
+            <div class="small text-muted">Target: {{ metrics.target_cal }}</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Protein</div>
+            <div class="fw-bold fs-5 text-danger">{{ diet.totals.protein_g|int }}g</div>
+            <div class="small text-muted">Target: {{ metrics.macros.protein_g }}g</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Carbs</div>
+            <div class="fw-bold fs-5 text-warning">{{ diet.totals.carbs_g|int }}g</div>
+            <div class="small text-muted">Target: {{ metrics.macros.carbs_g }}g</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Fat</div>
+            <div class="fw-bold fs-5 text-info">{{ diet.totals.fat_g|int }}g</div>
+            <div class="small text-muted">Target: {{ metrics.macros.fat_g }}g</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Workout Plan ───────────────────────────────────────────────────── -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-transparent py-3">
+      <h5 class="fw-bold mb-0"><i class="bi bi-lightning-charge me-2 text-danger"></i>Workout Plan</h5>
+      <p class="small text-muted mb-0">{{ workout.level|title }} level · {{ workout.goal|replace('_',' ')|title }}</p>
+    </div>
+    <div class="card-body">
+
+      <!-- Tip alert -->
+      {% if workout.tip %}
+      <div class="alert alert-info border-0 mb-4 py-2">
+        <i class="bi bi-lightbulb me-2"></i>{{ workout.tip }}
+      </div>
+      {% endif %}
+
+      <!-- Exercises table -->
+      <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Exercise</th>
+              <th>Duration</th>
+              <th>Sets</th>
+              <th>Reps</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ex in workout.exercises %}
+            <tr>
+              <td><span class="badge bg-primary rounded-pill">{{ loop.index }}</span></td>
+              <td class="fw-semibold"><span class="workout-icon"><i class="bi bi-activity"></i></span>{{ ex.name }}</td>
+              <td><i class="bi bi-clock me-1 text-muted"></i>{{ ex.duration }}</td>
+              <td>{{ ex.sets }}</td>
+              <td>{{ ex.reps }}</td>
+              <td class="text-muted small">{{ ex.notes }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Weekly schedule -->
+      <h6 class="fw-bold mb-3"><i class="bi bi-calendar3 me-2 text-success"></i>Weekly Schedule</h6>
+      <div class="row g-2">
+        {% for day, plan in workout.weekly_schedule.items() %}
+        <div class="col-md-3 col-6">
+          <div class="schedule-day
+            {% if 'Rest' in plan %}schedule-rest
+            {% elif 'recovery' in plan %}schedule-recovery
+            {% else %}schedule-workout{% endif %}">
+            <div class="fw-semibold">{{ day }}</div>
+            <div class="small">{{ plan }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add enumerate filter support
+</script>
+{% endblock %}

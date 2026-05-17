@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — HealthAI{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="page-hero d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <span class="section-kicker">Today Overview</span>
+      <h3 class="fw-bold mb-1">Good Morning, {{ current_user.name }}</h3>
+      <p class="text-muted mb-0">Here's your health overview for today</p>
+    </div>
+    <a href="{{ url_for('recommendations') }}" class="btn btn-primary">
+      <i class="bi bi-stars me-2"></i>View My Plan
+    </a>
+  </div>
+
+  <!-- Health Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon bg-primary-soft"><i class="bi bi-calculator text-primary"></i></div>
+        <div class="metric-value">{{ metrics.bmi }}</div>
+        <div class="metric-label">BMI</div>
+        <span class="badge bmi-badge-{{ metrics.bmi_cat|lower|replace(' ','_') }}">{{ metrics.bmi_cat }}</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon bg-warning-soft"><i class="bi bi-fire text-warning"></i></div>
+        <div class="metric-value">{{ metrics.bmr }}</div>
+        <div class="metric-label">BMR (kcal)</div>
+        <span class="badge bg-light text-muted">Base metabolic rate</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon bg-success-soft"><i class="bi bi-lightning text-success"></i></div>
+        <div class="metric-value">{{ metrics.tdee }}</div>
+        <div class="metric-label">TDEE (kcal)</div>
+        <span class="badge bg-light text-muted">Total daily energy</span>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="metric-card">
+        <div class="metric-icon bg-danger-soft"><i class="bi bi-bullseye text-danger"></i></div>
+        <div class="metric-value">{{ metrics.target_cal }}</div>
+        <div class="metric-label">Target (kcal)</div>
+        <span class="badge bg-light text-muted">{{ profile.primary_goal|replace('_',' ')|title }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Macros Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2 text-primary"></i>Daily Macro Targets</h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="macro-bar">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="small fw-semibold text-danger">Protein</span>
+                  <span class="small fw-bold">{{ metrics.macros.protein_g }}g</span>
+                </div>
+                <div class="progress" style="height:8px">
+                  <div class="progress-bar bg-danger" style="width:100%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="macro-bar">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="small fw-semibold text-warning">Carbohydrates</span>
+                  <span class="small fw-bold">{{ metrics.macros.carbs_g }}g</span>
+                </div>
+                <div class="progress" style="height:8px">
+                  <div class="progress-bar bg-warning" style="width:100%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="macro-bar">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="small fw-semibold text-info">Healthy Fats</span>
+                  <span class="small fw-bold">{{ metrics.macros.fat_g }}g</span>
+                </div>
+                <div class="progress" style="height:8px">
+                  <div class="progress-bar bg-info" style="width:100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Smart Summary -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="metric-card progress-card">
+        <div class="metric-icon bg-info-soft"><i class="bi bi-droplet text-info"></i></div>
+        <div class="metric-value">{{ today_habit.water_glasses if today_habit else 0 }}/8</div>
+        <div class="metric-label">Water glasses</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card progress-card">
+        <div class="metric-icon bg-primary-soft"><i class="bi bi-moon text-primary"></i></div>
+        <div class="metric-value">{{ today_habit.sleep_hours if today_habit else profile.sleep_hours }}hr</div>
+        <div class="metric-label">Sleep</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card progress-card">
+        <div class="metric-icon bg-success-soft"><i class="bi bi-person-walking text-success"></i></div>
+        <div class="metric-value">{{ today_habit.steps if today_habit else (today_log.steps if today_log else 0) }}</div>
+        <div class="metric-label">Steps</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="metric-card progress-card">
+        <div class="metric-icon bg-warning-soft"><i class="bi bi-emoji-smile text-warning"></i></div>
+        <div class="metric-value">{{ today_habit.mood if today_habit else 'neutral' }}</div>
+        <div class="metric-label">Mood</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictions, achievements, notifications -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-activity me-2 text-primary"></i>Smart Progress Prediction</h6>
+          <div class="row g-2 text-center mb-3">
+            <div class="col">
+              <div class="small text-muted">Current Weight</div>
+              <div class="fw-bold fs-5">{{ prediction.current_weight }} kg</div>
+            </div>
+            <div class="col">
+              <div class="small text-muted">7 Days</div>
+              <div class="fw-bold fs-5 text-primary">{{ prediction.weight_7 }} kg</div>
+            </div>
+            <div class="col">
+              <div class="small text-muted">30 Days</div>
+              <div class="fw-bold fs-5 text-success">{{ prediction.weight_30 }} kg</div>
+            </div>
+          </div>
+          <div class="small text-muted mb-2">Expected calories burned: <strong>{{ prediction.expected_burned }}</strong> kcal/day</div>
+          <canvas id="predictionChart" height="130"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>Gamification</h6>
+          <div class="d-flex justify-content-between mb-3">
+            <span class="badge bg-primary fs-6 px-3 py-2">{{ achievements.xp }} XP</span>
+            <span class="badge bg-success fs-6 px-3 py-2">{{ achievements.streak }} day streak</span>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            {% for badge in achievements.badges %}
+            <span class="achievement-badge"><i class="bi bi-award me-1"></i>{{ badge }}</span>
+            {% else %}
+            <span class="text-muted small">Log activity to unlock badges.</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-bell me-2 text-danger"></i>Reminders</h6>
+          {% for note in notifications %}
+          <div class="notification-item"><i class="bi bi-dot"></i>{{ note }}</div>
+          {% else %}
+          <div class="text-success small">All clear for today.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Log + Charts Row -->
+  <div class="row g-3 mb-4">
+    <!-- Daily Tracker Input -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-journal-plus me-2 text-success"></i>Today's Log</h6>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Steps walked</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-person-walking"></i></span>
+              <input type="number" id="inp-steps" class="form-control" placeholder="0"
+                     value="{{ today_log.steps if today_log else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Water (litres)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+              <input type="number" id="inp-water" class="form-control" placeholder="0.0" step="0.1"
+                     value="{{ today_log.water_litres if today_log else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Water glasses</label>
+            <input type="number" id="inp-water-glasses" class="form-control form-control-sm" placeholder="8"
+                   value="{{ today_habit.water_glasses if today_habit else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Sleep hours</label>
+            <input type="number" id="inp-sleep" class="form-control form-control-sm" step="0.5"
+                   value="{{ today_habit.sleep_hours if today_habit else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Calories consumed</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-fire"></i></span>
+              <input type="number" id="inp-calories" class="form-control" placeholder="0"
+                     value="{{ today_log.calories_consumed if today_log else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Current Weight (kg)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text"><i class="bi bi-bar-chart"></i></span>
+              <input type="number" id="inp-weight" class="form-control" placeholder="{{ profile.weight_kg }}" step="0.1"
+                     value="{{ today_log.weight_kg if today_log and today_log.weight_kg else '' }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Calories burned</label>
+            <input type="number" id="inp-burned" class="form-control form-control-sm" placeholder="0"
+                   value="{{ today_log.calories_burned if today_log else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Mood</label>
+            <select id="inp-mood" class="form-select form-select-sm">
+              {% for mood in ['great','happy','neutral','stressed','sad'] %}
+              <option value="{{ mood }}" {% if today_habit and today_habit.mood == mood %}selected{% endif %}>{{ mood|title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="inp-exercise"
+                   {% if today_habit and today_habit.exercise_completed %}checked{% endif %}>
+            <label class="form-check-label small fw-semibold" for="inp-exercise">Exercise completed</label>
+          </div>
+          <button class="btn btn-success w-100 btn-sm" onclick="saveLog()">
+            <i class="bi bi-save me-2"></i>Save Today's Log
+          </button>
+          <div id="log-msg" class="mt-2 small text-center d-none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weight Chart -->
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-primary"></i>Weight Trend</h6>
+          <canvas id="weightChart" height="130"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Food, mental health, risk -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-egg-fried me-2 text-warning"></i>Food Logging</h6>
+          <div class="small text-muted mb-2">Today: {{ today_food.calories }} kcal · P {{ today_food.protein_g }}g · C {{ today_food.carbs_g }}g · F {{ today_food.fat_g }}g</div>
+          <canvas id="macroChart" height="120"></canvas>
+          <div class="mt-3">
+            <input id="food-name" class="form-control form-control-sm mb-2" placeholder="Search or add food, e.g. dal rice">
+            <div class="row g-2">
+              <div class="col"><input id="food-calories" class="form-control form-control-sm" placeholder="kcal"></div>
+              <div class="col"><input id="food-protein" class="form-control form-control-sm" placeholder="protein"></div>
+              <div class="col"><input id="food-carbs" class="form-control form-control-sm" placeholder="carbs"></div>
+              <div class="col"><input id="food-fat" class="form-control form-control-sm" placeholder="fat"></div>
+            </div>
+            <button class="btn btn-warning btn-sm w-100 mt-2" onclick="addFood()"><i class="bi bi-plus-circle me-1"></i>Add meal</button>
+            <div id="food-msg" class="mt-2 small text-center d-none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-heart-pulse me-2 text-danger"></i>Health Risk Detection</h6>
+          {% for label, item in risks.items() %}
+          <div class="risk-row risk-{{ item.level|lower }}">
+            <div class="d-flex justify-content-between">
+              <strong>{{ label|title }} risk</strong>
+              <span>{{ item.level }}</span>
+            </div>
+            <div class="small text-muted">{{ item.recommendation }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-wind me-2 text-info"></i>Mental Health</h6>
+          <canvas id="moodChart" height="110"></canvas>
+          <select id="mood-select" class="form-select form-select-sm mt-3">
+            {% for mood in ['great','happy','neutral','stressed','sad'] %}
+            <option value="{{ mood }}">{{ mood|title }}</option>
+            {% endfor %}
+          </select>
+          <input id="stress-level" class="form-control form-control-sm mt-2" type="number" min="1" max="5" placeholder="Stress 1-5">
+          <textarea id="mood-journal" class="form-control form-control-sm mt-2" rows="2" placeholder="Mood journal"></textarea>
+          <div class="breathing-circle mt-3" id="breathing-circle">Breathe</div>
+          <button class="btn btn-info btn-sm w-100 mt-2 text-white" onclick="saveMood()">Save mood journal</button>
+          <div id="mood-msg" class="mt-2 small text-center d-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calorie + Steps + Water Charts -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-fire me-2 text-warning"></i>Calories (7 days)</h6>
+          <canvas id="calorieChart" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-person-walking me-2 text-success"></i>Steps (7 days)</h6>
+          <canvas id="stepsChart" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-droplet me-2 text-info"></i>Water Intake (7 days)</h6>
+          <canvas id="waterChart" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Section -->
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-primary">
+        <div class="card-body">
+          <h6 class="fw-bold mb-3"><i class="bi bi-chat-heart me-2 text-primary"></i>Daily Feedback</h6>
+          <p class="small text-muted">Help your plan adapt to your progress</p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Did you follow today's diet plan?</label>
+            <div class="d-flex gap-2">
+              <input type="radio" class="btn-check" name="followed" id="yes" value="yes">
+              <label class="btn btn-outline-success btn-sm" for="yes">✅ Yes</label>
+              <input type="radio" class="btn-check" name="followed" id="no" value="no">
+              <label class="btn btn-outline-danger btn-sm" for="no">❌ No</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <textarea id="fb-notes" class="form-control form-control-sm" rows="2"
+                      placeholder="Any notes for your coach? (optional)"></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="submitFeedback()">
+            <i class="bi bi-send me-2"></i>Submit Feedback
+          </button>
+          <div id="fb-msg" class="mt-2 small text-center d-none"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm bg-gradient-soft">
+        <div class="card-body text-center py-4">
+          <i class="bi bi-robot display-4 text-primary mb-3"></i>
+          <h5 class="fw-bold">AI Health Coach</h5>
+          <p class="text-muted small">Ask anything about your diet, workout, or health goals</p>
+          <a href="{{ url_for('chatbot') }}" class="btn btn-primary">
+            <i class="bi bi-chat-dots me-2"></i>Chat with AI Coach
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chartData = {{ chart_data|safe }};
+const targetCal = {{ metrics.target_cal }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

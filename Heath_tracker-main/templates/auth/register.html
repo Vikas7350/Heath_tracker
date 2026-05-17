@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Register — HealthAI{% endblock %}
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="text-center mb-4">
+      <div class="auth-logo mb-3">
+        <i class="bi bi-person-plus-fill"></i>
+      </div>
+      <h2 class="fw-bold">Create your account</h2>
+      <p class="text-muted">Start your personalized health journey</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Full Name</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="name" class="form-control" placeholder="Your full name" required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Email address</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" class="form-control"
+                 placeholder="Min 6 characters" minlength="6" required>
+          <button class="btn btn-outline-secondary password-toggle" type="button" title="Show password"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold">Confirm Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+          <input type="password" name="confirm_password" class="form-control"
+                 placeholder="Confirm password" minlength="6" required>
+          <button class="btn btn-outline-secondary password-toggle" type="button" title="Show password"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+        <i class="bi bi-envelope-check me-2"></i>Send OTP
+      </button>
+    </form>
+
+    <hr class="my-4">
+    {% if session.get('pending_registration_email') %}
+    <p class="text-center mb-3">
+      OTP already sent?
+      <a href="{{ url_for('verify_otp_route') }}" class="text-primary fw-semibold">Enter OTP</a>
+    </p>
+    {% endif %}
+    <p class="text-center text-muted mb-0">
+      Already have an account?
+      <a href="{{ url_for('login') }}" class="text-primary fw-semibold">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

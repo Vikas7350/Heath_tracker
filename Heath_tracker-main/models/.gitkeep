@@ -1,0 +1,2 @@
+# Add this after app = Flask(__name__) in app.py
+# Jinja2 custom filter for enumerate
