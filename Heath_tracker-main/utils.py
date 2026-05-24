@@ -1,9 +1,9 @@
 import re
 import secrets
 import smtplib
+import threading
 from datetime import timedelta
 from email.mime.text import MIMEText
-from threading import Thread
 
 from flask import current_app, session
 
@@ -106,19 +106,27 @@ def send_otp_email(email, otp, purpose="verification"):
         return False
 
 
+def send_email_async(app, email, otp, purpose="verification"):
+    with app.app_context():
+        try:
+            send_otp_email(email, otp, purpose)
+        except Exception as e:
+            app.logger.exception("Background email error: %s", e)
+
+
 def send_otp_email_async(email, otp, purpose="verification"):
     """
     Send OTP email in a background thread to avoid blocking the request.
     This prevents SMTP timeouts from causing worker process to hang.
     """
-    def send_in_thread():
-        try:
-            send_otp_email(email, otp, purpose)
-        except Exception as e:
-            current_app.logger.exception("Background email thread error: %s", e)
-    
+    app = current_app._get_current_object()
+
     # Start email sending in background thread (daemon thread)
-    thread = Thread(target=send_in_thread, daemon=True)
+    thread = threading.Thread(
+        target=send_email_async,
+        args=(app, email, otp, purpose),
+        daemon=True,
+    )
     thread.start()
 
 
